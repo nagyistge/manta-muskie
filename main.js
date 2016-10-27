@@ -50,6 +50,7 @@ var LOG = bunyan.createLogger({
     serializers: restify.bunyan.serializers
 });
 var AGENT;
+var SHARKAGENT;
 var MAHI;
 var MARLIN;
 var KEYAPI;
@@ -202,8 +203,32 @@ function usage(parser, message)
     process.exit(2);
 }
 
-function createCueballHttpAgent(cfg) {
+function createCueballHttpAgent(cfg, sharkCfg) {
+    /* Used for connections to mahi and other services. */
     AGENT = new cueball.HttpAgent(cfg);
+
+    /* Used only for connections to sharks. */
+    var sharkCueball = {
+        resolver: sharkCfg.resolver,
+        spares: sharkCfg.spares,
+        maximum: sharkCfg.maximum,
+        tcpKeepAliveInitialDelay: sharkCfg.maxIdleTime,
+        recovery: {
+            default: {
+                retries: sharkCfg.retry.retries,
+                timeout: sharkCfg.connectTimeout,
+                maxTimeout: sharkCfg.maxTimeout,
+                delay: sharkCfg.maxTimeout
+            },
+            'dns_srv': {
+                retries: 0,
+                timeout: sharkCfg.connectTimeout,
+                maxTimeout: sharkCfg.maxTimeout,
+                delay: 0
+            }
+        }
+    };
+    SHARKAGENT = new cueball.HttpAgent(sharkCueball);
 }
 
 function createPickerClient(cfg) {
@@ -403,7 +428,7 @@ function version() {
 (function main() {
     var cfg = configure();
 
-    createCueballHttpAgent(cfg.cueballHttpAgent);
+    createCueballHttpAgent(cfg.cueballHttpAgent, cfg.sharkConfig);
     createMarlinClient(cfg.marlin);
     createPickerClient(cfg.storage);
     createAuthCacheClient(cfg.auth);
@@ -422,6 +447,7 @@ function version() {
     cfg.picker = function picker() { return (PICKER); };
     cfg.moray = function moray() { return (MORAY); };
     cfg.medusa = function medusaClient() { return (MEDUSA); };
+    cfg.sharkAgent = function sharkAgent() { return (SHARKAGENT); };
 
     cfg.name = 'ssl';
 

@@ -45,6 +45,13 @@
         "retries": 5,
         "delay": 250,
         "maxDelay": 2000
+      },
+      "dns_srv": {
+        "timeout": 2000,
+        "maxTimeout": 10000,
+        "retries": 1,
+        "delay": 0,
+        "maxDelay": 0
       }
     }
   },
@@ -67,11 +74,16 @@
   },
   "sharkConfig": {
     "connectTimeout": 2000,
+    "maxTimeout": 10000,
+    "delay": 250,
     "maxIdleTime": 1000,
     "maxClients": 50,
     "retry": {
       "retries": 2
-    }
+    },
+    "spares": 1,
+    "maximum": 8,
+    "resolver": ["nameservice.{{DOMAIN_NAME}}"]
   },
   "authToken": {
     "salt": "{{MUSKIE_JOB_TOKEN_AES_SALT}}",
